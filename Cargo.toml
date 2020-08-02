@@ -1,4 +1,5 @@
 [workspace]
 members = [
-  "nss_virtual"
+  "nss_virtual",
+  "radius_client"
 ]
