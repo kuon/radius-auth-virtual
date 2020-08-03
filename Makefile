@@ -19,3 +19,20 @@ clean:
 
 debug:
 	cargo with "cgdb --args {bin} {args}" -- run --bin radius_client
+
+
+.PHONY: genpatch
+
+genpatch:
+	git submodule --quiet foreach --recursive \
+		'export NAME="$${PWD##*/}"; git --no-pager diff \
+		--src-prefix="a/$${NAME}/" --dst-prefix="b/$${NAME}/"' \
+		> submodules.patch
+
+.PHONY: applypatch
+
+applypatch:
+	git submodule --quiet foreach --recursive \
+		'git checkout .'
+	git apply submodules.patch
+
