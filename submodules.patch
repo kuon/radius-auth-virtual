@@ -1,0 +1,27 @@
+diff --git a/hostap/src/radius/radius.c b/hostap/src/radius/radius.c
+index be16e27b9..955808d1f 100644
+--- a/hostap/src/radius/radius.c
++++ b/hostap/src/radius/radius.c
+@@ -920,8 +920,8 @@ int radius_msg_make_authenticator(struct radius_msg *msg)
+  * The returned payload is allocated with os_malloc() and caller must free it
+  * by calling os_free().
+  */
+-static u8 *radius_msg_get_vendor_attr(struct radius_msg *msg, u32 vendor,
+-				      u8 subtype, size_t *alen)
++u8 *radius_msg_get_vendor_attr(struct radius_msg *msg, u32 vendor,
++				u8 subtype, size_t *alen)
+ {
+ 	u8 *data, *pos;
+ 	size_t i, len;
+diff --git a/hostap/src/radius/radius.h b/hostap/src/radius/radius.h
+index 630c0f9d0..b94bd53b5 100644
+--- a/hostap/src/radius/radius.h
++++ b/hostap/src/radius/radius.h
+@@ -338,4 +338,7 @@ u8 radius_msg_find_unlisted_attr(struct radius_msg *msg, u8 *attrs);
+ 
+ int radius_gen_session_id(u8 *id, size_t len);
+ 
++u8 *radius_msg_get_vendor_attr(struct radius_msg *msg, u32 vendor,
++				u8 subtype, size_t *alen);
++
+ #endif /* RADIUS_H */
