@@ -6,6 +6,7 @@ use crate::bindings::*;
 use crate::config::Config;
 use crate::credentials::Credentials;
 use crate::error::Error;
+use crate::user::Attribute;
 use crate::user::User;
 
 pub struct Client {
@@ -24,7 +25,7 @@ impl Client {
             return Err(Error::Memory);
         }
 
-        let ctx = Client { ctx };
+        let client = Client { ctx };
 
         if config.servers.is_empty() {
             return Err(Error::NoServer);
@@ -70,7 +71,7 @@ impl Client {
 
                 unsafe {
                     if rc_add_server(
-                        ctx.ctx,
+                        client.ctx,
                         cs.as_ptr(),
                         ip,
                         ipv6 as _,
@@ -85,27 +86,59 @@ impl Client {
         }
 
         if config.debug {
-            unsafe { rc_enable_debug(ctx.ctx) };
+            unsafe { rc_enable_debug(client.ctx) };
         }
 
-        Ok(ctx)
+        for (vendor, subtype) in config.attributes.iter() {
+            unsafe {
+                if rc_add_attribute(client.ctx, *vendor, *subtype) != 0 {
+                    return Err(Error::Memory);
+                }
+            }
+        }
+
+        Ok(client)
     }
 
     pub fn authenticate(
         &self,
         credentials: &Credentials,
     ) -> Result<User, Error> {
-        unsafe {
+        let res = unsafe {
             let u = CString::new(&credentials.username[..]).unwrap();
             let p = CString::new(&credentials.password[..]).unwrap();
-            let res = rc_authenticate(self.ctx, u.as_ptr(), p.as_ptr());
-            return match res {
-                AuthResult::ACCEPT => Ok(User),
-                AuthResult::REJECT => Err(Error::AuthReject),
-                AuthResult::ERROR => Err(Error::RadiusClient),
-                AuthResult::NO_SERV => Err(Error::NoServer),
-                AuthResult::SERV_TIMEOUT => Err(Error::ServerTimeout),
-            };
+            rc_authenticate(self.ctx, u.as_ptr(), p.as_ptr())
+        };
+        return match res {
+            AuthResult::ACCEPT => {
+                let mut user = User::new();
+                self.copy_attributes(&mut user);
+                Ok(user)
+            }
+            AuthResult::REJECT => Err(Error::AuthReject),
+            AuthResult::ERROR => Err(Error::RadiusClient),
+            AuthResult::NO_SERV => Err(Error::NoServer),
+            AuthResult::SERV_TIMEOUT => Err(Error::ServerTimeout),
+        };
+    }
+
+    pub fn copy_attributes(&self, user: &mut User) {
+        let mut count = 0;
+        unsafe {
+            let attrs = rc_get_attributes(self.ctx, &mut count);
+
+            let attrs = std::slice::from_raw_parts(attrs, count as _);
+
+            for raw_attr in attrs {
+                let data =
+                    std::slice::from_raw_parts(raw_attr.data, raw_attr.len);
+                let attr = Attribute {
+                    vendor: raw_attr.vendor,
+                    subtype: raw_attr.subtype,
+                    data: data.to_vec(),
+                };
+                user.add_attribute(attr);
+            }
         }
     }
 }

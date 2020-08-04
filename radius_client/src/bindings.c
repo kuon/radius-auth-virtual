@@ -6,22 +6,33 @@ struct server_state {
   int timeout;
 };
 
+struct vendor_attr {
+  u32 vendor;
+  u8 subtype;
+  u8* data;
+  size_t len;
+};
+
 struct context {
   struct server_state* servers;
   int server_count;
   int current_server;
   struct hostapd_radius_servers conf;
   struct radius_client_data* radius;
-  u8 radius_identifier;
+
+  struct vendor_attr* vendor_attrs;
+  int vendor_attrs_count;
 
   const char* username;
   const char* password;
 
   int did_timeout;
   int result_code;
+
+  u8 radius_identifier;
 };
 
-enum { ACCEPT = 0, REJECT, ERROR, NO_SERV, SERV_TIMEOUT };
+enum { RC_ACCEPT = 0, RC_REJECT, RC_ERROR, RC_NO_SERV, RC_SERV_TIMEOUT };
 
 /*
  * Many functions can be macro, so we redefine them to ensure all
@@ -76,16 +87,10 @@ static void logger_cb(void* ctx,
                       int level,
                       const char* txt,
                       size_t len) {
-  if (addr)
-    wpa_printf(MSG_DEBUG, "STA " MACSTR ": %s\n", MAC2STR(addr), txt);
-  else
+  if (addr && *addr) {
+    wpa_printf(MSG_DEBUG, "STA " MACSTR ": %s", MAC2STR(addr), txt);
+  } else
     wpa_printf(MSG_DEBUG, "%s", txt);
-}
-
-void rc_enable_debug(rc_ctx ctx) {
-  hostapd_logger_register_cb(logger_cb);
-  ctx->conf.msg_dumps = 1;
-  wpa_debug_level = 0;
 }
 
 rc_ctx rc_create_context(void) {
@@ -100,12 +105,46 @@ rc_ctx rc_create_context(void) {
 }
 
 void rc_destroy_context(rc_ctx ctx) {
-  for (int i = 0; i < ctx->conf.num_auth_servers; i++) {
-    struct hostapd_radius_server* srv = ctx->conf.auth_servers + i;
-    os_free(srv->shared_secret);
+  for (int i = 0; i < ctx->server_count; i++) {
+    struct server_state* state = ctx->servers + i;
+    os_free(state->radius_server.shared_secret);
   }
+
+  for (int i = 0; i < ctx->vendor_attrs_count; i++) {
+    struct vendor_attr* attr = ctx->vendor_attrs + i;
+    os_free(attr->data);
+  }
+
   os_free(ctx->servers);
+  os_free(ctx->vendor_attrs);
   os_free(ctx);
+}
+
+void rc_enable_debug(rc_ctx ctx) {
+  hostapd_logger_register_cb(logger_cb);
+  ctx->conf.msg_dumps = 1;
+  wpa_debug_level = 0;
+}
+
+int rc_add_attribute(rc_ctx ctx, u32 vendor, u8 subtype) {
+  int count = ctx->vendor_attrs_count;
+
+  ctx->vendor_attrs =
+      os_realloc(ctx->vendor_attrs, (count + 1) * sizeof(struct vendor_attr));
+
+  if (!ctx->vendor_attrs) {
+    return -1;
+  }
+  ctx->vendor_attrs_count++;
+
+  struct vendor_attr* attr = ctx->vendor_attrs + count;
+
+  os_memset(attr, 0, sizeof(*attr));
+
+  attr->vendor = vendor;
+  attr->subtype = subtype;
+
+  return 0;
 }
 
 int rc_add_server(rc_ctx ctx,
@@ -163,7 +202,6 @@ static void server_timeout(void* eloop_ctx, void* timeout_ctx) {
   eloop_terminate();
 }
 
-/* Process the RADIUS frames from Authentication Server */
 static RadiusRxResult receive_auth(struct radius_msg* msg,
                                    struct radius_msg* req,
                                    const u8* shared_secret,
@@ -177,21 +215,31 @@ static RadiusRxResult receive_auth(struct radius_msg* msg,
 
   switch (hdr->code) {
     case RADIUS_CODE_ACCESS_ACCEPT:
-      ctx->result_code = ACCEPT;
+      ctx->result_code = RC_ACCEPT;
       break;
     case RADIUS_CODE_ACCESS_REJECT:
-      ctx->result_code = REJECT;
+      ctx->result_code = RC_REJECT;
       break;
     default:
-      ctx->result_code = ERROR;
+      ctx->result_code = RC_ERROR;
       break;
   }
-  wpa_printf(MSG_DEBUG,
-             "#####################################################\n\n");
   wpa_printf(MSG_DEBUG, "Received RADIUS Authentication message; code=%d",
              hdr->code);
 
   eloop_terminate();
+
+  if (ctx->result_code == RC_ACCEPT) {
+    for (int i = 0; i < ctx->vendor_attrs_count; i++) {
+      struct vendor_attr* attr = ctx->vendor_attrs + i;
+      os_free(attr->data);
+      attr->data = radius_msg_get_vendor_attr(msg, attr->vendor, attr->subtype,
+                                              &attr->len);
+
+      wpa_printf(MSG_DEBUG, "Copied RADIUS attribute; vendor=%d subtype=%d",
+                 attr->vendor, attr->subtype);
+    }
+  }
 
   return RADIUS_RX_PROCESSED;
 }
@@ -251,13 +299,13 @@ static int try_auth(rc_ctx ctx) {
 
   ctx->radius = radius_client_init(&ctx, &ctx->conf);
   if (!ctx->radius) {
-    return ERROR;
+    return RC_ERROR;
   }
   int res = radius_client_register(ctx->radius, RADIUS_AUTH, receive_auth, ctx);
 
   if (res != 0) {
     radius_client_deinit(ctx->radius);
-    return ERROR;
+    return RC_ERROR;
   }
 
   eloop_register_timeout(0, 0, send_auth, ctx, NULL);
@@ -268,7 +316,7 @@ static int try_auth(rc_ctx ctx) {
   radius_client_deinit(ctx->radius);
 
   if (ctx->did_timeout) {
-    return SERV_TIMEOUT;
+    return RC_SERV_TIMEOUT;
   }
 
   return ctx->result_code;
@@ -276,7 +324,7 @@ static int try_auth(rc_ctx ctx) {
 
 int rc_authenticate(rc_ctx ctx, const char* username, const char* password) {
   if (!ctx->server_count) {
-    return NO_SERV;
+    return RC_NO_SERV;
   }
 
   ctx->username = username;
@@ -285,10 +333,15 @@ int rc_authenticate(rc_ctx ctx, const char* username, const char* password) {
   for (int i = 0; i < ctx->server_count; i++) {
     ctx->current_server = i;
     int res = try_auth(ctx);
-    if (res != SERV_TIMEOUT) {
+    if (res != RC_SERV_TIMEOUT) {
       return res;
     }
   }
 
-  return SERV_TIMEOUT;
+  return RC_SERV_TIMEOUT;
+}
+
+struct vendor_attr* rc_get_attributes(rc_ctx ctx, int* count) {
+  *count = ctx->vendor_attrs_count;
+  return ctx->vendor_attrs;
 }
