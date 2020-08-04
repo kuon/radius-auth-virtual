@@ -1,0 +1,3 @@
+let b:ale_c_clang_options = '-DCONFIG_IPV6 -Ihostap/src -Ihostap/src/utils'
+let b:ale_cpp_clang_options = b:ale_c_clang_options
+let b:ale_linters = {'c': ['clang'], 'cpp': ['clang']}
