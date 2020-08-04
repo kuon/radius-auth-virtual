@@ -8,6 +8,8 @@ pub enum Error {
     Memory,
     #[error("no server provided")]
     NoServer,
+    #[error("all servers timed out")]
+    ServerTimeout,
     #[error("invalid server `{0}`")]
     InvalidServer(String),
     #[error("no shared secret provided")]
@@ -16,6 +18,8 @@ pub enum Error {
     SharedSecretTooLong,
     #[error("underlying IO error")]
     IOError(#[from] std::io::Error),
-    #[error("failed to initialize RADIUS client")]
+    #[error("RADIUS client failure")]
     RadiusClient,
+    #[error("authentication rejected, wrong credentials")]
+    AuthReject,
 }

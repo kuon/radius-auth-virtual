@@ -1,17 +1,14 @@
 
+mod bindings;
 
 pub mod config;
-pub use config::Config;
-
 pub mod error;
-pub use error::Error;
-pub use error::Error::*;
+pub mod client;
+pub mod user;
+pub mod credentials;
+pub mod prelude;
 
-mod bindings;
-use bindings::*;
 
-
-use std::net::{SocketAddr, ToSocketAddrs};
 
 /*
 pub fn encode_test(txt: &str) -> String {
@@ -27,16 +24,7 @@ pub fn encode_test(txt: &str) -> String {
 }
 */
 
-#[derive(Debug)]
-pub struct Attributes;
 
-pub fn authenticate_user<S: Into<String>>(
-    config: &Config,
-    username: S,
-    password: S,
-) -> Result<Attributes, Error> {
-    let ctx = Context::try_with_config(&config)?;
 
-    Ok(Attributes)
-}
+
 

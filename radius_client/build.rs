@@ -7,8 +7,11 @@ const CONFIG_WINDOWS: &'static [(&'static str, &'static str)] = &[
     ("CONFIG_ELOOP", "eloop_win"),
 ];
 
-const CONFIG_UNIX: &'static [(&'static str, &'static str)] =
-    &[("CONFIG_OS", "unix"), ("CONFIG_ELOOP", "eloop")];
+const CONFIG_UNIX: &'static [(&'static str, &'static str)] = &[
+    ("CONFIG_OS", "unix"),
+    ("CONFIG_ELOOP", "eloop"),
+    ("CONFIG_ELOOP_EPOLL", "TRUE"),
+];
 
 const CONFIG_COMMON: &'static [(&'static str, &'static str)] = &[
     ("CONFIG_IEEE8021X_EAPOL", "TRUE"),

@@ -1,8 +1,16 @@
 
 .PHONY: build
 
-build:
+build: linux windows
+
+.PHONY: windows
+
+windows:
 	cargo build --target x86_64-pc-windows-gnu -p radius_client
+
+.PHONY: linux
+
+linux:
 	cargo build
 
 .PHONY: test
