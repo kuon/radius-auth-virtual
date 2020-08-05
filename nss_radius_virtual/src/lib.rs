@@ -1,4 +1,3 @@
-extern crate libc;
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]
@@ -9,18 +8,18 @@ use libnss::passwd::{Passwd, PasswdHooks};
 use libnss::shadow::{Shadow, ShadowHooks};
 
 struct VirtualPasswd;
-libnss_passwd_hooks!(virtual, VirtualPasswd);
+libnss_passwd_hooks!(radius_virtual, VirtualPasswd);
 
 impl PasswdHooks for VirtualPasswd {
     fn get_entry_by_name(name: String) -> Response<Passwd> {
         if name == "radiususer" {
             return Response::Success(Passwd {
-                name: "testuser".to_string(),
-                passwd: "*".to_string(),
-                uid: 1000,
-                gid: 1000,
+                name: "normaluser".to_string(),
+                passwd: "x".to_string(),
+                uid: 1011,
+                gid: 1011,
                 gecos: "Test Account".to_string(),
-                dir: "/home/testuser".to_string(),
+                dir: "/home/normaluser".to_string(),
                 shell: "/bin/bash".to_string(),
             });
         }
@@ -36,14 +35,14 @@ impl PasswdHooks for VirtualPasswd {
 }
 
 struct VirtualShadow;
-libnss_shadow_hooks!(virtual, VirtualShadow);
+libnss_shadow_hooks!(radius_virtual, VirtualShadow);
 
 impl ShadowHooks for VirtualShadow {
     fn get_entry_by_name(name: String) -> Response<Shadow> {
         if name == "radiususer" {
             return Response::Success(Shadow {
-                name: "testuser".to_string(),
-                passwd: "*".to_string(),
+                name: "normaluser".to_string(),
+                passwd: "!".to_string(),
                 last_change: -1,
                 change_min_days: -1,
                 change_max_days: -1,

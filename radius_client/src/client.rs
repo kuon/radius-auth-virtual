@@ -1,4 +1,3 @@
-use std::ffi::CStr;
 use std::ffi::CString;
 use std::net::{SocketAddr, ToSocketAddrs};
 
@@ -110,15 +109,15 @@ impl Client {
             rc_authenticate(self.ctx, u.as_ptr(), p.as_ptr())
         };
         return match res {
-            AuthResult::ACCEPT => {
+            AuthResult::Accept => {
                 let mut user = User::new();
                 self.copy_attributes(&mut user);
                 Ok(user)
             }
-            AuthResult::REJECT => Err(Error::AuthReject),
-            AuthResult::ERROR => Err(Error::RadiusClient),
-            AuthResult::NO_SERV => Err(Error::NoServer),
-            AuthResult::SERV_TIMEOUT => Err(Error::ServerTimeout),
+            AuthResult::Reject => Err(Error::AuthReject),
+            AuthResult::Error => Err(Error::RadiusClient),
+            AuthResult::NoServ => Err(Error::NoServer),
+            AuthResult::ServTimeout => Err(Error::ServerTimeout),
         };
     }
 

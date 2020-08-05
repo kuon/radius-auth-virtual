@@ -13,20 +13,11 @@ windows:
 linux:
 	cargo build
 
-.PHONY: test
-
-test:
-	cargo run --bin radius_client
 
 .PHONY: clean
 
 clean:
 	rm -fr target
-
-.PHONY: debug
-
-debug:
-	cargo with "cgdb --args {bin} {args}" -- run --bin radius_client
 
 
 .PHONY: genpatch
@@ -44,3 +35,13 @@ applypatch:
 		'git checkout .'
 	git apply submodules.patch
 
+
+.PHONY: test
+
+test:
+	cargo run --bin radius_client
+
+.PHONY:gdb
+
+gdb:
+	cargo with "cgdb --args {bin} {args}" -- run --bin radius_client

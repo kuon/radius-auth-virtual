@@ -5,13 +5,14 @@ pub(crate) struct Context {
     private: [u8; 0],
 }
 
+#[allow(dead_code)]
 #[repr(C)]
 pub(crate) enum AuthResult {
-    ACCEPT = 0,
-    REJECT,
-    ERROR,
-    NO_SERV,
-    SERV_TIMEOUT,
+    Accept = 0,
+    Reject,
+    Error,
+    NoServ,
+    ServTimeout,
 }
 
 
@@ -49,6 +50,6 @@ extern "C" {
     ) -> AuthResult;
     pub(crate) fn rc_get_attributes(
         ctx: *mut Context,
-        count: *mut c_int 
+        count: *mut c_int
     ) -> *mut VendorAttribute;
 }
