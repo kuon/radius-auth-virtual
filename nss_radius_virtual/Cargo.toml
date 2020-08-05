@@ -11,6 +11,7 @@ libc = "0.2.71"
 lazy_static = "1.4.0"
 libnss = "0.3.0"
 paste = "1.0.0"
+radius_virtual = {path = "../radius_virtual"}
 
 [lib]
 name = "nss_radius_virtual"

@@ -18,6 +18,8 @@ pub enum Error {
     SharedSecretTooLong,
     #[error("underlying IO error")]
     IOError(#[from] std::io::Error),
+    #[error("TOML syntax error")]
+    TomlError(#[from] toml::de::Error),
     #[error("RADIUS client failure")]
     RadiusClient,
     #[error("authentication rejected, wrong credentials")]

@@ -39,7 +39,7 @@ applypatch:
 .PHONY: test
 
 test:
-	cargo run --bin radius_client
+	cargo run --bin radius_test
 
 .PHONY:gdb
 

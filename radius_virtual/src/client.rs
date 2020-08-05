@@ -26,11 +26,11 @@ impl Client {
 
         let client = Client { ctx };
 
-        if config.servers.is_empty() {
+        if config.radius.servers.is_empty() {
             return Err(Error::NoServer);
         }
 
-        for server in config.servers.iter() {
+        for server in config.radius.servers.iter() {
             let addrs = server.address.to_socket_addrs();
             let addrs = match addrs {
                 Err(_) => {
@@ -40,7 +40,7 @@ impl Client {
             };
 
             let shared_secret =
-                match (&config.shared_secret, &server.shared_secret) {
+                match (&config.radius.shared_secret, &server.shared_secret) {
                     (None, None) => return Err(Error::NoSharedSecret),
                     (_, Some(s)) => s.clone(),
                     (Some(s), _) => s.clone(),
@@ -62,8 +62,8 @@ impl Client {
                     }
                 };
                 let timeout = match server.timeout {
-                    0 => config.timeout,
-                    t => t,
+                    None => config.radius.timeout.unwrap_or(10),
+                    Some(t) => t,
                 };
 
                 let timeout = if timeout < 1 { 1 } else { timeout.min(30) };
@@ -84,14 +84,16 @@ impl Client {
             }
         }
 
-        if config.debug {
+        if config.radius.debug.unwrap_or(false) {
             unsafe { rc_enable_debug(client.ctx) };
         }
 
-        for (vendor, subtype) in config.attributes.iter() {
-            unsafe {
-                if rc_add_attribute(client.ctx, *vendor, *subtype) != 0 {
-                    return Err(Error::Memory);
+        if let Some(attrs) = &config.radius.attributes {
+            for (vendor, subtype) in attrs.iter() {
+                unsafe {
+                    if rc_add_attribute(client.ctx, *vendor, *subtype) != 0 {
+                        return Err(Error::Memory);
+                    }
                 }
             }
         }

@@ -9,6 +9,7 @@ edition = "2018"
 [dependencies.pamsm]
 version = "0.4.0"
 features = ["libpam"]
+radius_virtual = {path = "../radius_virtual"}
 
 [lib]
 name = "pam_radius_virtual"

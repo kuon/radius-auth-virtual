@@ -1,0 +1,2 @@
+- Somehow send own_ip_addr
+- EAP support
