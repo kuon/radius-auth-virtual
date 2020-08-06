@@ -2,7 +2,7 @@ use crate::error::Error;
 use serde::{Deserialize, Deserializer};
 use std::path::PathBuf;
 
-const CONFIG_PATH: &str = "/etc/auth_radius_virtual.toml";
+const CONFIG_PATH: &str = "/etc/radius_auth_virtual.toml";
 const DB_PATH: &str = "/var/run/radius_virtual.db";
 
 #[derive(Deserialize, Debug)]
