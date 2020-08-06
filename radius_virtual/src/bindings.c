@@ -69,6 +69,8 @@ int rc_init(void) {
   }
   set_rc_did_init(1);
 
+  wpa_debug_level = MSG_ERROR;
+
   return 0;
 }
 
@@ -123,7 +125,7 @@ void rc_destroy_context(rc_ctx ctx) {
 void rc_enable_debug(rc_ctx ctx) {
   hostapd_logger_register_cb(logger_cb);
   ctx->conf.msg_dumps = 1;
-  wpa_debug_level = 0;
+  wpa_debug_level = MSG_DEBUG;
 }
 
 int rc_add_attribute(rc_ctx ctx, u32 vendor, u8 subtype) {
