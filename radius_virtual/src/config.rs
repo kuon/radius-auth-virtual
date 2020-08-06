@@ -49,6 +49,10 @@ impl Config {
         Config::read_file(CONFIG_PATH)
     }
 
+    pub fn system_path() -> &'static str {
+        CONFIG_PATH
+    }
+
     pub fn read_file<S: Into<PathBuf>>(path: S) -> Result<Config, Error> {
         let config = std::fs::read_to_string(path.into())?;
         let config = toml::from_str::<Config>(&config)?;

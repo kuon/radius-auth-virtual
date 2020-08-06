@@ -39,7 +39,8 @@ applypatch:
 .PHONY: test
 
 test:
-	cargo run --bin radius_test
+	cargo run --bin radius_client -- \
+		-c test_config.toml -u testing -p password
 
 .PHONY:gdb
 

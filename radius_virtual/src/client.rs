@@ -112,7 +112,7 @@ impl Client {
         };
         return match res {
             AuthResult::Accept => {
-                let mut user = User::new();
+                let mut user = User::new(&credentials.username);
                 self.copy_attributes(&mut user);
                 Ok(user)
             }
@@ -138,7 +138,7 @@ impl Client {
                     subtype: raw_attr.subtype,
                     data: data.to_vec(),
                 };
-                user.add_attribute(attr);
+                user.attributes.push(attr);
             }
         }
     }

@@ -1,5 +1,5 @@
 [package]
-name = "radius_virtual"
+name = "radius_client"
 version = "0.1.0"
 authors = ["Nicolas goy <kuon@goyman.com>"]
 edition = "2018"
@@ -7,11 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-thiserror = "1.0.20"
-toml = "0.5.6"
-serde = {version = "1.0.114", features = ["derive"]}
-base16 = "0.2.1"
-
-[build-dependencies]
-cc = "1.0.58"
-openssl-src = "111.10.2"
+radius_virtual = {path = "../radius_virtual"}
+structopt = "0.3.15"
+anyhow = "1.0.32"
+serde_json = "1.0.57"
