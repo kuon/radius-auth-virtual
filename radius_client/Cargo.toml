@@ -11,3 +11,7 @@ radius_virtual = {path = "../radius_virtual"}
 structopt = "0.3.15"
 anyhow = "1.0.32"
 serde_json = "1.0.57"
+
+[[bin]]
+name = "radius_auth_client"
+path = "src/main.rs"
