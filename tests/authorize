@@ -1,0 +1,3 @@
+testing Cleartext-Password := "password"
+	Attr-26.1.1 := "0xAA"
+

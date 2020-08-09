@@ -40,11 +40,3 @@ where
     base16::decode(s).map_err(|err| Error::custom(err.to_string()))
 }
 
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn serialize() {
-        assert_eq!(2 + 2, 4);
-    }
-}

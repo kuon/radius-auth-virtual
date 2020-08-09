@@ -1,0 +1,29 @@
+[db]
+path = "/tmp/radius_auth_virtual.db"
+
+[radius]
+shared_secret = "testing123"
+attributes = ["1.1"]
+
+[[radius.servers]]
+address = "127.0.0.1"
+timeout = 3
+
+
+[[users]]
+username = "adminuser"
+uid = 1010
+group = "admingroup"
+gid = 1010
+
+attribute = "1.1"
+attribute_value = 0xAA
+
+[[users]]
+username = "normaluser"
+uid = 1011
+group = "normalgroup"
+gid = 1011
+
+attribute = "1.1"
+attribute_value = 0xBB
