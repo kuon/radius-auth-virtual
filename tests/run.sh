@@ -26,7 +26,7 @@ cargo run --bin radius_auth_client -- -c tests/config.toml -u testing -p passwor
 RES=$?
 
 # Run cargo tests
-cargo test
+cargo test --test-threads=1
 
 RES=$(($? + RES))
 
