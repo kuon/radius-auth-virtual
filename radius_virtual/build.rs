@@ -84,6 +84,12 @@ fn main() {
     add_files(&mut build, FILES_COMMON);
     add_files(&mut build, files);
 
+    let rustflags = env::var("RUSTFLAGS").unwrap_or(String::new());
+
+    if rustflags.contains("sanitizer=address") {
+        build.flag("-fsanitize=address");
+    }
+
     build
         .flag_if_supported("-Wno-unused-parameter")
         .flag("-includewin_patch.h")
