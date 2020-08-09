@@ -16,3 +16,6 @@ sqlite = "0.25.3"
 [build-dependencies]
 cc = "1.0.58"
 openssl-src = "111.10.2"
+
+[dev-dependencies]
+assert_matches = "1.3"
