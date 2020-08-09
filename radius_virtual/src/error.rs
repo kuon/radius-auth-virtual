@@ -24,4 +24,6 @@ pub enum Error {
     RadiusClient,
     #[error("authentication rejected, wrong credentials")]
     AuthReject,
+    #[error("database error")]
+    DatabaseError(#[from] sqlite::Error),
 }

@@ -26,7 +26,7 @@ fn main() -> Result<()> {
         args.config.to_string_lossy()
     ))?;
 
-    let client = Client::try_with_config(&config)
+    let client = Client::with_config(&config)
         .context("Cannot initialize client with config")?;
 
     let cred =

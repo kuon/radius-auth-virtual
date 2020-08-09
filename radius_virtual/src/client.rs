@@ -13,7 +13,7 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn try_with_config(config: &Config) -> Result<Self, Error> {
+    pub fn with_config(config: &Config) -> Result<Self, Error> {
         if unsafe { rc_init() } != 0 {
             return Err(Error::OSInitFailed);
         }

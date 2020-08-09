@@ -3,7 +3,6 @@ use serde::{Deserialize, Deserializer};
 use std::path::PathBuf;
 
 const CONFIG_PATH: &str = "/etc/radius_auth_virtual.toml";
-const DB_PATH: &str = "/var/run/radius_virtual.db";
 
 #[derive(Deserialize, Debug)]
 pub struct Server {
@@ -45,7 +44,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn read_system() -> Result<Config, Error> {
+    pub fn system() -> Result<Config, Error> {
         Config::read_file(CONFIG_PATH)
     }
 
