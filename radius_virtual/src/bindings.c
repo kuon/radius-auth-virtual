@@ -42,20 +42,22 @@ void rc_free(void* ptr) {
   os_free(ptr);
 }
 
-static int did_init = 0;
+static int init_lock = 0;
 
-static inline int rc_did_init() {
-  return __atomic_load_n(&did_init, __ATOMIC_SEQ_CST);
+static inline int rc_init_lock() {
+  return __atomic_load_n(&init_lock, __ATOMIC_SEQ_CST);
 }
 
-static inline void set_rc_did_init(int i) {
-  __atomic_store_n(&did_init, i, __ATOMIC_SEQ_CST);
+static inline void set_rc_init_lock(int i) {
+  __atomic_store_n(&init_lock, i, __ATOMIC_SEQ_CST);
 }
 
 int rc_init(void) {
-  if (rc_did_init()) {
+  if (rc_init_lock()) {
     return -1;
   }
+
+  set_rc_init_lock(1);
 
   int res = os_program_init();
   if (res != 0) {
@@ -65,9 +67,9 @@ int rc_init(void) {
   res = eloop_init();
   if (res != 0) {
     os_program_deinit();
+    set_rc_init_lock(0);
     return res;
   }
-  set_rc_did_init(1);
 
   wpa_debug_level = MSG_ERROR;
 
@@ -75,12 +77,12 @@ int rc_init(void) {
 }
 
 void rc_deinit(void) {
-  if (!rc_did_init()) {
+  if (!rc_init_lock()) {
     return;
   }
   eloop_destroy();
   os_program_deinit();
-  set_rc_did_init(0);
+  set_rc_init_lock(0);
 }
 
 static void logger_cb(void* ctx,
