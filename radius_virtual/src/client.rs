@@ -53,12 +53,12 @@ impl Client {
             let cs = CString::new(&shared_secret[..]).unwrap();
 
             for addr in addrs {
-                let (ip, ipv6, port) = match addr {
+                let (ip, ipv6, port): (Vec<u8>, _, _) = match addr {
                     SocketAddr::V4(v4) => {
-                        (v4.ip().octets().as_ptr(), false, v4.port())
+                        (v4.ip().octets().into(), false, v4.port())
                     }
                     SocketAddr::V6(v6) => {
-                        (v6.ip().octets().as_ptr(), true, v6.port())
+                        (v6.ip().octets().into(), true, v6.port())
                     }
                 };
                 let timeout = match server.timeout {
@@ -72,7 +72,7 @@ impl Client {
                     if rc_add_server(
                         client.ctx,
                         cs.as_ptr(),
-                        ip,
+                        ip.as_ptr(),
                         ipv6 as _,
                         port,
                         timeout,
