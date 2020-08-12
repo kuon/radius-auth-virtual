@@ -66,6 +66,13 @@ impl PamServiceModule for PamTime {
             _ => return PamError::SERVICE_ERR,
         };
 
+        let res = db::User::lookup(&config, &user);
+
+        let user = match res {
+            Some(user) => user,
+            _ => return PamError::AUTH_ERR,
+        };
+
         let res = db.store_user(&user);
 
         match res {
@@ -75,16 +82,38 @@ impl PamServiceModule for PamTime {
     }
 
     fn setcred(pamh: Pam, _flags: PamFlag, _args: Vec<String>) -> PamError {
+
+        let config = Config::system();
+
+        let config = match config {
+            Ok(config) => config,
+            _ => return PamError::SERVICE_ERR,
+        };
+
+
+        let db = Db::with_config(&config);
+
+        let mut db = match db {
+            Ok(db) => db,
+            _ => return PamError::SERVICE_ERR,
+        };
+
         let user = match pamh.get_user(None) {
             Ok(Some(u)) => u,
             Ok(None) => return PamError::USER_UNKNOWN,
             Err(e) => return e,
         };
 
-        if user.to_str().unwrap_or("") == "radiususer" {
-            PamError::SUCCESS
-        } else {
-            PamError::AUTH_ERR
+        let user = match user.to_str() {
+            Ok(u) => u,
+            _ => return PamError::USER_UNKNOWN,
+        };
+
+        let user = db.get_user(user);
+
+        match user {
+            Ok(_user) => PamError::SUCCESS,
+            _ => PamError::AUTH_ERR
         }
     }
 }

@@ -1,10 +1,38 @@
+use crate::config;
 use crate::config::Config;
 use crate::error::*;
-use crate::user::User;
+use crate::user;
+use serde::{Deserialize, Serialize};
 use sqlite::{Connection, Value};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 const VERSION: &str = "1";
+
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+pub struct User {
+    pub radius: user::User,
+    pub config: config::User,
+}
+
+impl User {
+    pub fn lookup(config: &Config, radius: &user::User) -> Option<Self> {
+        for user in config.users.iter() {
+            for attr in radius.attributes.iter() {
+                if attr.vendor == user.attribute.0
+                    && attr.subtype == user.attribute.1
+                    && attr.data == user.attribute_value
+                {
+                    return Some(User {
+                        radius: radius.clone(),
+                        config: user.clone(),
+                    });
+                }
+            }
+        }
+
+        None
+    }
+}
 
 pub struct Db {
     conn: Connection,
@@ -26,7 +54,7 @@ impl Db {
         let mut version_ok = true;
 
         db.conn.iterate("PRAGMA user_version", |pairs| {
-            for &(column, value) in pairs.iter() {
+            for &(_column, value) in pairs.iter() {
                 let value = value.unwrap();
                 if value != "0" && value != VERSION {
                     version_ok = false;
@@ -74,7 +102,7 @@ impl Db {
         let buf = serde_cbor::to_vec(&user)?;
 
         stm.bind(&[
-            Value::String(user.username.clone()),
+            Value::String(user.radius.username.clone()),
             Value::Integer(now()),
             Value::Binary(buf),
         ])?;
@@ -92,9 +120,7 @@ impl Db {
             .prepare("SELECT (serialized_user) FROM users WHERE username = ?")?
             .cursor();
 
-        stm.bind(&[
-            Value::String(username.into()),
-        ])?;
+        stm.bind(&[Value::String(username.into())])?;
 
         if let Some(row) = stm.next().unwrap_or(None) {
             let data = row[0].as_binary().ok_or_else(|| Error::UserNotFound)?;

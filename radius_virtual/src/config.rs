@@ -1,46 +1,49 @@
 use crate::error::Error;
-use serde::{Deserialize, Deserializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::path::PathBuf;
 
 const CONFIG_PATH: &str = "/etc/radius_auth_virtual.toml";
 
 #[derive(Deserialize, Debug)]
 pub struct Server {
-    pub(crate) address: String,
-    pub(crate) shared_secret: Option<String>,
-    pub(crate) timeout: Option<u16>,
+    pub address: String,
+    pub shared_secret: Option<String>,
+    pub timeout: Option<u16>,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct Db {
-    pub(crate) path: PathBuf,
+    pub path: PathBuf,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct Radius {
-    pub(crate) shared_secret: Option<String>,
-    pub(crate) servers: Vec<Server>,
-    pub(crate) debug: Option<bool>,
-    pub(crate) timeout: Option<u16>,
+    pub shared_secret: Option<String>,
+    pub servers: Vec<Server>,
+    pub debug: Option<bool>,
+    pub timeout: Option<u16>,
     #[serde(deserialize_with = "decode_attrs")]
-    pub(crate) attributes: Option<Vec<(u32, u8)>>,
+    pub attributes: Option<Vec<(u32, u8)>>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub struct User {
-    pub(crate) username: String,
-    pub(crate) uid: u32,
-    pub(crate) group: String,
-    pub(crate) gid: u32,
-    pub(crate) attribute: String,
-    pub(crate) attribute_value: u32,
+    pub username: String,
+    pub uid: u32,
+    pub group: String,
+    pub gid: u32,
+    pub home: String,
+    pub shell: String,
+    #[serde(serialize_with = "encode_attr", deserialize_with = "decode_attr")]
+    pub attribute: (u32, u8),
+    pub attribute_value: Vec<u8>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Deserialize)]
 pub struct Config {
-    pub(crate) db: Db,
-    pub(crate) radius: Radius,
-    pub(crate) users: Vec<User>,
+    pub db: Db,
+    pub radius: Radius,
+    pub users: Vec<User>,
 }
 
 impl Config {
@@ -75,9 +78,18 @@ fn decode_attrs<'de, D: Deserializer<'de>>(
     Ok(Some(attrs))
 }
 
-fn parse_attr(attr: &String) -> Result<(u32, u8), &str> {
+fn decode_attr<'de, D: Deserializer<'de>>(
+    deserializer: D,
+) -> Result<(u32, u8), D::Error> {
+    let str_attr: String = serde::de::Deserialize::deserialize(deserializer)?;
+
+    use serde::de::Error;
+    parse_attr(&str_attr).map_err(|err| Error::custom(err.to_string()))
+}
+
+fn parse_attr(attr: &String) -> Result<(u32, u8), Error> {
     let parts: Vec<&str> = attr.split('.').collect();
-    let err = Err("invalid attribute format");
+    let err = Err(Error::AttrFormat);
     if parts.len() != 2 {
         return err;
     }
@@ -89,4 +101,12 @@ fn parse_attr(attr: &String) -> Result<(u32, u8), &str> {
     } else {
         err
     }
+}
+
+fn encode_attr<S>(key: &(u32, u8), serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let s = format!("{}.{}", key.0, key.1);
+    serializer.serialize_str(&s)
 }

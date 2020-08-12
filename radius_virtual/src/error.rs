@@ -31,5 +31,7 @@ pub enum Error {
     #[error("incompatible database schema")]
     IncompatibleDbVersion,
     #[error("user not found")]
-    UserNotFound
+    UserNotFound,
+    #[error("invalid attribute format")]
+    AttrFormat
 }

@@ -15,15 +15,19 @@ username = "adminuser"
 uid = 1010
 group = "admingroup"
 gid = 1010
+home = "/home/adminuser"
+shell = "/bin/bash"
 
 attribute = "1.1"
-attribute_value = 0xAA
+attribute_value = [0xAA]
 
 [[users]]
 username = "normaluser"
 uid = 1011
 group = "normalgroup"
 gid = 1011
+home = "/home/normaluser"
+shell = "/bin/bash"
 
 attribute = "1.1"
-attribute_value = 0xBB
+attribute_value = [0xBB]

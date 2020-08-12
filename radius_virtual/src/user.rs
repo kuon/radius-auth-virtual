@@ -1,6 +1,6 @@
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Attribute {
     pub vendor: u32,
     pub subtype: u8,
@@ -8,7 +8,7 @@ pub struct Attribute {
     pub data: Vec<u8>,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct User {
     pub username: String,
     pub attributes: Vec<Attribute>,
