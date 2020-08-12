@@ -2,6 +2,9 @@
 
 use radius_virtual::prelude::*;
 
+mod helpers;
+use helpers::*;
+
 
 #[test]
 fn it_passes_auth() -> Result<(), Error> {
@@ -26,8 +29,7 @@ fn it_fails_auth() -> Result<(), Error> {
 }
 
 fn client() -> Result<Client, Error> {
-    let path = std::env::current_dir()?;
-    let path = path.join("../tests/config.toml");
-    let conf = Config::read_file(path)?;
+    let conf = config()?;
     Client::with_config(&conf)
 }
+

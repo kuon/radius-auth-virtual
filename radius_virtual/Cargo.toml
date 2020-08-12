@@ -12,6 +12,7 @@ toml = "0.5.6"
 serde = {version = "1.0.114", features = ["derive"]}
 base16 = "0.2.1"
 sqlite = "0.25.3"
+serde_cbor = "0.11.1"
 
 [build-dependencies]
 cc = "1.0.58"

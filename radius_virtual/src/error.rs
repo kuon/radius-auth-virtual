@@ -26,4 +26,10 @@ pub enum Error {
     AuthReject,
     #[error("database error")]
     DatabaseError(#[from] sqlite::Error),
+    #[error("CBOR serialize error")]
+    CborSerializeError(#[from] serde_cbor::error::Error),
+    #[error("incompatible database schema")]
+    IncompatibleDbVersion,
+    #[error("user not found")]
+    UserNotFound
 }
