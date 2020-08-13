@@ -54,9 +54,9 @@ build/freeradius/dist/sbin/radiusd: build/freeradius/Make.inc
 
 build/freeradius/Make.inc: build/freeradius/configure
 	cd build/freeradius && ./configure \
-							--with-kqueue-lib-dir=../kqueue/ \
-							--with-kqueue-include-dir=../kqueue/include/ \
-							--prefix=${PWD}/build/freeradius/dist/
+		--with-kqueue-lib-dir=../kqueue/ \
+		--with-kqueue-include-dir=../kqueue/include/ \
+		--prefix=${PWD}/build/freeradius/dist/
 
 build/freeradius/configure:
 	mkdir -p build
