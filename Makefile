@@ -1,5 +1,10 @@
 PWD = $(shell pwd)
 
+.PHONY: debug
+
+debug:
+	cargo build
+
 .PHONY: release
 
 release: release-host release-windows
