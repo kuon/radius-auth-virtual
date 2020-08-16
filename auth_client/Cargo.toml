@@ -1,0 +1,17 @@
+[package]
+name = "auth_client"
+version = "0.1.0"
+authors = ["Nicolas goy <kuon@goyman.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+radius = {path = "../radius"}
+structopt = "0.3.15"
+anyhow = "1.0.32"
+serde_json = "1.0.57"
+
+[[bin]]
+name = "radius_auth_client"
+path = "src/main.rs"
