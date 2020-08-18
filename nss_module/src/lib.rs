@@ -1,3 +1,7 @@
+
+#[macro_use]
+extern crate log;
+
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]
@@ -7,28 +11,44 @@ use libnss::interop::Response;
 use libnss::passwd::{Passwd, PasswdHooks};
 use libnss::shadow::{Shadow, ShadowHooks};
 
-use radius_virtual::prelude::*;
+use nss_db::setup_log;
+use nss_db::Config;
+use nss_db::Db;
+use nss_db::User;
+
+
+const SYSLOG_NAME: &str = "nss_radius_virtual";
+const RADIUS_SHELL: &str = "/usr/bin/radius_shell";
 
 struct VirtualPasswd;
 libnss_passwd_hooks!(radius_virtual, VirtualPasswd);
 
 impl PasswdHooks for VirtualPasswd {
     fn get_entry_by_name(name: String) -> Response<Passwd> {
+        setup_log(SYSLOG_NAME);
         let user = lookup(&name);
         match user {
-            None => Response::NotFound,
-            Some(user) => Response::Success(Passwd {
-                name: user.config.username.clone(),
+            None => Response::Success(Passwd {
+                name: "normaluser".to_string(),
                 passwd: "x".to_string(),
-                uid: user.config.uid,
-                gid: user.config.gid,
+                uid: 1011,
+                gid: 1011,
+                gecos: "NON EXISTENT".to_string(),
+                dir: "/tmp".to_string(),
+                shell: RADIUS_SHELL.to_string()
+            }),
+            Some(user) => Response::Success(Passwd {
+                name: user.mapping.username.clone(),
+                passwd: "x".to_string(),
+                uid: user.mapping.uid,
+                gid: user.mapping.gid,
                 gecos: format!(
                     "Mapped RADIUS account {}->{}",
-                    name, user.config.username
+                    name, user.mapping.username
                 )
                 .to_string(),
-                dir: user.config.home,
-                shell: user.config.shell,
+                dir: user.mapping.home,
+                shell: RADIUS_SHELL.to_string()
             }),
         }
     }
@@ -49,7 +69,7 @@ impl ShadowHooks for VirtualShadow {
         match user {
             None => Response::NotFound,
             Some(user) => Response::Success(Shadow {
-                name: user.config.username,
+                name: user.mapping.username,
                 passwd: "!".to_string(),
                 last_change: -1,
                 change_min_days: -1,
@@ -66,7 +86,7 @@ impl ShadowHooks for VirtualShadow {
     }
 }
 
-fn lookup<S: Into<String>>(name: S) -> Option<db::User> {
+fn lookup<S: Into<String>>(name: S) -> Option<User> {
     let config = Config::system();
 
     let config = match config {

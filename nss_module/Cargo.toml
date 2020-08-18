@@ -1,18 +1,19 @@
 [package]
-name = "pam_radius_virtual"
+name = "nss_module"
 version = "0.1.0"
 authors = ["Nicolas goy <kuon@goyman.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[dependencies.pamsm]
-version = "0.4.0"
-features = ["libpam"]
-
 [dependencies]
-radius_virtual = {path = "../radius_virtual"}
+libc = "0.2.71"
+lazy_static = "1.4.0"
+libnss = "0.3.0"
+paste = "1.0.0"
+log = "0.4.11"
+nss_db = {path = "../nss_db"}
 
 [lib]
-name = "pam_radius_virtual"
+name = "nss_radius_virtual"
 crate-type = [ "cdylib" ]

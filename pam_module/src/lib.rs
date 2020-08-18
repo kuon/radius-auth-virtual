@@ -1,9 +1,20 @@
 #[macro_use]
+extern crate log;
+
+#[macro_use]
 extern crate pamsm;
 
 use pamsm::{Pam, PamError, PamFlag, PamLibExt, PamServiceModule};
 
-use radius_virtual::prelude::*;
+use nss_db::setup_log;
+use nss_db::Config;
+use nss_db::Db;
+use radius::Client;
+use radius::Credentials;
+use radius::Error;
+
+
+const SYSLOG_NAME: &str = "pam_radius_virtual";
 
 struct PamTime;
 
@@ -13,21 +24,23 @@ impl PamServiceModule for PamTime {
         _flags: PamFlag,
         _args: Vec<String>,
     ) -> PamError {
-        let pass = match pamh.get_authtok(None) {
-            Ok(Some(p)) => p,
-            Ok(None) => return PamError::AUTH_ERR,
-            Err(e) => return e,
-        };
+        setup_log(SYSLOG_NAME);
 
-        let user = match pamh.get_user(None) {
+        let username = match pamh.get_user(None) {
             Ok(Some(u)) => u,
             Ok(None) => return PamError::USER_UNKNOWN,
             Err(e) => return e,
         };
 
-        let user = match user.to_str() {
+        let username = match username.to_str() {
             Ok(u) => u,
             _ => return PamError::USER_UNKNOWN,
+        };
+
+        let pass = match pamh.get_authtok(None) {
+            Ok(Some(p)) => p,
+            Ok(None) => return PamError::AUTH_ERR,
+            Err(e) => return e,
         };
 
         let pass = match pass.to_str() {
@@ -42,7 +55,7 @@ impl PamServiceModule for PamTime {
             _ => return PamError::SERVICE_ERR,
         };
 
-        let client = Client::with_config(&config);
+        let client = Client::with_config(&config.radius);
 
         let client = match client {
             Ok(client) => client,
@@ -56,17 +69,17 @@ impl PamServiceModule for PamTime {
             _ => return PamError::SERVICE_ERR,
         };
 
-        let cred = Credentials::with_username_password(user, pass);
+        let cred = Credentials::with_username_password(username, pass);
 
         let res = client.authenticate(&cred);
 
-        let user = match res {
+        let radius_user = match res {
             Ok(user) => user,
             Err(Error::AuthReject) => return PamError::AUTH_ERR,
             _ => return PamError::SERVICE_ERR,
         };
 
-        let res = db::User::lookup(&config, &user);
+        let res = config.map_user(&radius_user);
 
         let user = match res {
             Some(user) => user,
@@ -75,6 +88,23 @@ impl PamServiceModule for PamTime {
 
         let res = db.store_user(&user);
 
+
+        let cookie = match res {
+            Ok(s) => s,
+            _ => return PamError::SERVICE_ERR,
+        };
+
+        let res = pamh.putenv(&format!("RADIUS_USER={}", username));
+        if let Err(_) = res  {
+            return PamError::SERVICE_ERR;
+        }
+
+        let res = pamh.putenv(&format!("RADIUS_USER_COOKIE={}", cookie));
+        if let Err(_) = res  {
+            return PamError::SERVICE_ERR;
+        }
+
+
         match res {
             Ok(_) => return PamError::SUCCESS,
             _ => return PamError::SERVICE_ERR,
@@ -82,6 +112,7 @@ impl PamServiceModule for PamTime {
     }
 
     fn setcred(pamh: Pam, _flags: PamFlag, _args: Vec<String>) -> PamError {
+        setup_log(SYSLOG_NAME);
 
         let config = Config::system();
 

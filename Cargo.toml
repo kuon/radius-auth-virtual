@@ -1,5 +1,9 @@
 [workspace]
 members = [
+  "nss_module",
+  "nss_db",
+  "pam_module",
   "radius",
   "auth_client",
+  "shell_wrapper",
 ]

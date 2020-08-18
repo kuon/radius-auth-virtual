@@ -2,28 +2,28 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Error {
-    #[error("could not init OS")]
+    #[error("Could not init OS")]
     OSInitFailed,
-    #[error("could not allocate memory")]
+    #[error("Could not allocate memory")]
     Memory,
-    #[error("no server provided")]
+    #[error("No server provided")]
     NoServer,
-    #[error("all servers timed out")]
+    #[error("All servers timed out")]
     ServerTimeout,
-    #[error("invalid server `{0}`")]
+    #[error("Invalid server `{0}`")]
     InvalidServer(String),
-    #[error("no shared secret provided")]
+    #[error("No shared secret provided")]
     NoSharedSecret,
-    #[error("shared secret too long (max 256 chars)")]
+    #[error("Shared secret too long (max 256 chars)")]
     SharedSecretTooLong,
-    #[error("underlying IO error")]
+    #[error("Underlying IO error")]
     IOError(#[from] std::io::Error),
     #[error("RADIUS client failure")]
     RadiusClient,
-    #[error("authentication rejected, wrong credentials")]
+    #[error("Authentication rejected, wrong credentials")]
     AuthReject,
     #[error("TOML syntax error")]
     TomlError(#[from] toml::de::Error),
-    #[error("config format error")]
+    #[error("Config format error")]
     ConfigFormat,
 }

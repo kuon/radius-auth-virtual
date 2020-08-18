@@ -1,38 +1,12 @@
-use crate::config;
 use crate::config::Config;
 use crate::error::*;
-use crate::user;
-use serde::{Deserialize, Serialize};
+use crate::user::User;
+use rand::distributions::Alphanumeric;
+use rand::{thread_rng, Rng};
 use sqlite::{Connection, Value};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 const VERSION: &str = "1";
-
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
-pub struct User {
-    pub radius: user::User,
-    pub config: config::User,
-}
-
-impl User {
-    pub fn lookup(config: &Config, radius: &user::User) -> Option<Self> {
-        for user in config.users.iter() {
-            for attr in radius.attributes.iter() {
-                if attr.vendor == user.attribute.0
-                    && attr.subtype == user.attribute.1
-                    && attr.data == user.attribute_value
-                {
-                    return Some(User {
-                        radius: radius.clone(),
-                        config: user.clone(),
-                    });
-                }
-            }
-        }
-
-        None
-    }
-}
 
 pub struct Db {
     conn: Connection,
@@ -50,6 +24,13 @@ impl Db {
         let db = Db {
             conn: Connection::open_with_flags(path, flags)?,
         };
+
+        if cfg!(unix) {
+            use std::fs::Permissions;
+            use std::os::unix::fs::PermissionsExt;
+            let perms = Permissions::from_mode(0o600);
+            std::fs::set_permissions(path, perms)?;
+        }
 
         let mut version_ok = true;
 
@@ -75,7 +56,8 @@ impl Db {
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               username TEXT,
               last_login INTEGER,
-              serialized_user BLOB
+              serialized_user BLOB,
+              cookie TEXT
             );
             CREATE UNIQUE INDEX IF NOT EXISTS users_unique
             ON users(username);
@@ -84,17 +66,21 @@ impl Db {
         Ok(db)
     }
 
-    pub fn store_user(&mut self, user: &User) -> Result<(), Error> {
+    pub fn store_user(&mut self, user: &User) -> Result<String, Error> {
+        let cookie: String =
+            thread_rng().sample_iter(&Alphanumeric).take(32).collect();
+
         let mut stm = self
             .conn
             .prepare(
                 "INSERT INTO users
-                (username, last_login, serialized_user)
-                VALUES (?, ?, ?)
+                (username, last_login, serialized_user, cookie)
+                VALUES (?, ?, ?, ?)
                 ON CONFLICT (username)
                 DO UPDATE SET
                 last_login=excluded.last_login,
-                serialized_user=excluded.serialized_user
+                serialized_user=excluded.serialized_user,
+                cookie=excluded.cookie
                 ",
             )?
             .cursor();
@@ -105,14 +91,15 @@ impl Db {
             Value::String(user.radius.username.clone()),
             Value::Integer(now()),
             Value::Binary(buf),
+            Value::String(cookie.clone()),
         ])?;
 
         stm.next()?;
-        Ok(())
+        Ok(cookie)
     }
 
     pub fn get_user<S: Into<String>>(
-        &mut self,
+        &self,
         username: S,
     ) -> Result<User, Error> {
         let mut stm = self
@@ -121,6 +108,30 @@ impl Db {
             .cursor();
 
         stm.bind(&[Value::String(username.into())])?;
+
+        self.run_user_query(stm)
+    }
+
+    pub fn get_user_with_cookie<S: Into<String>>(
+        &self,
+        username: S,
+        cookie: S,
+    ) -> Result<User, Error> {
+        let mut stm = self
+            .conn
+            .prepare("SELECT (serialized_user) FROM users WHERE username = ? AND cookie = ?")?
+            .cursor();
+
+        stm.bind(&[
+            Value::String(username.into()),
+            Value::String(cookie.into()),
+        ])?;
+
+        self.run_user_query(stm)
+    }
+
+    fn run_user_query(&self, stm: sqlite::Cursor) -> Result<User, Error> {
+        let mut stm = stm;
 
         if let Some(row) = stm.next().unwrap_or(None) {
             let data = row[0].as_binary().ok_or_else(|| Error::UserNotFound)?;
