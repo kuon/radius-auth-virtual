@@ -14,7 +14,7 @@ pub struct Db {
 
 impl Db {
     pub fn with_config(config: &Config) -> Result<Self, Error> {
-        let path = &config.db.path;
+        let path = &config.mapping.db.path;
 
         let flags = sqlite::OpenFlags::new()
             .set_create()

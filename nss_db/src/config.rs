@@ -25,11 +25,27 @@ pub struct UserMapping {
     pub attribute_value: Vec<u8>,
 }
 
+#[derive(Clone, Deserialize, Debug)]
+pub struct DefaultUser {
+    pub username: String,
+    pub uid: u32,
+    pub group: String,
+    pub gid: u32,
+    pub home: String,
+    pub shell: String
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Mapping {
+    pub db: Db,
+    pub users: Vec<UserMapping>,
+    pub default_user: DefaultUser
+}
+
 #[derive(Debug, Deserialize)]
 pub struct Config {
-    pub db: Db,
     pub radius: radius::Config,
-    pub users: Vec<UserMapping>,
+    pub mapping: Mapping,
 }
 
 impl Config {
@@ -48,7 +64,7 @@ impl Config {
     }
 
     pub fn map_user(&self, radius: &radius::User) -> Option<User> {
-        for user in self.users.iter() {
+        for user in self.mapping.users.iter() {
             for attr in radius.attributes.iter() {
                 if attr.vendor == user.attribute.0
                     && attr.subtype == user.attribute.1

@@ -1,4 +1,3 @@
-
 #[macro_use]
 extern crate log;
 
@@ -14,11 +13,8 @@ use libnss::shadow::{Shadow, ShadowHooks};
 use nss_db::setup_log;
 use nss_db::Config;
 use nss_db::Db;
-use nss_db::User;
-
 
 const SYSLOG_NAME: &str = "nss_radius_virtual";
-const RADIUS_SHELL: &str = "/usr/bin/radius_shell";
 
 struct VirtualPasswd;
 libnss_passwd_hooks!(radius_virtual, VirtualPasswd);
@@ -26,16 +22,26 @@ libnss_passwd_hooks!(radius_virtual, VirtualPasswd);
 impl PasswdHooks for VirtualPasswd {
     fn get_entry_by_name(name: String) -> Response<Passwd> {
         setup_log(SYSLOG_NAME);
-        let user = lookup(&name);
+        let config = match Config::system() {
+            Ok(config) => config,
+            _ => return Response::Unavail,
+        };
+
+        let db = match Db::with_config(&config) {
+            Ok(db) => db,
+            _ => return Response::Unavail,
+        };
+
+        let user = db.get_user(&name).ok();
         match user {
             None => Response::Success(Passwd {
-                name: "normaluser".to_string(),
+                name: config.mapping.default_user.username.clone(),
                 passwd: "x".to_string(),
-                uid: 1011,
-                gid: 1011,
-                gecos: "NON EXISTENT".to_string(),
-                dir: "/tmp".to_string(),
-                shell: RADIUS_SHELL.to_string()
+                uid: config.mapping.default_user.uid,
+                gid: config.mapping.default_user.gid,
+                gecos: "Radius default user".to_string(),
+                dir: config.mapping.default_user.home.clone(),
+                shell: config.mapping.default_user.shell.clone()
             }),
             Some(user) => Response::Success(Passwd {
                 name: user.mapping.username.clone(),
@@ -48,7 +54,7 @@ impl PasswdHooks for VirtualPasswd {
                 )
                 .to_string(),
                 dir: user.mapping.home,
-                shell: RADIUS_SHELL.to_string()
+                shell: config.mapping.default_user.shell.clone()
             }),
         }
     }
@@ -65,7 +71,17 @@ libnss_shadow_hooks!(radius_virtual, VirtualShadow);
 
 impl ShadowHooks for VirtualShadow {
     fn get_entry_by_name(name: String) -> Response<Shadow> {
-        let user = lookup(&name);
+        let config = match Config::system() {
+            Ok(config) => config,
+            _ => return Response::Unavail,
+        };
+
+        let db = match Db::with_config(&config) {
+            Ok(db) => db,
+            _ => return Response::Unavail,
+        };
+
+        let user = db.get_user(name).ok();
         match user {
             None => Response::NotFound,
             Some(user) => Response::Success(Shadow {
@@ -84,21 +100,4 @@ impl ShadowHooks for VirtualShadow {
     fn get_all_entries() -> Response<Vec<Shadow>> {
         Response::Success(vec![])
     }
-}
-
-fn lookup<S: Into<String>>(name: S) -> Option<User> {
-    let config = Config::system();
-
-    let config = match config {
-        Ok(config) => config,
-        _ => return None,
-    };
-
-    let db = Db::with_config(&config);
-
-    let mut db = match db {
-        Ok(db) => db,
-        _ => return None,
-    };
-    db.get_user(name).ok()
 }

@@ -1,6 +1,3 @@
-[db]
-path = "/tmp/radius_auth_virtual.db"
-
 [radius]
 shared_secret = "testing123"
 attributes = ["1.1"]
@@ -9,8 +6,18 @@ attributes = ["1.1"]
 address = "127.0.0.1"
 timeout = 3
 
+[mapping.db]
+path = "/tmp/radius_auth_virtual.db"
 
-[[users]]
+[mapping.default_user]
+username = "radius"
+uid = 1012
+group = "radius"
+gid = 1012
+home = "/home/radius"
+shell = "/usr/bin/radius_shell"
+
+[[mapping.users]]
 username = "adminuser"
 uid = 1010
 group = "admingroup"
@@ -21,7 +28,7 @@ shell = "/bin/bash"
 attribute = "1.1"
 attribute_value = [0xAA]
 
-[[users]]
+[[mapping.users]]
 username = "normaluser"
 uid = 1011
 group = "normalgroup"

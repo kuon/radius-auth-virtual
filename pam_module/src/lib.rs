@@ -124,7 +124,7 @@ impl PamServiceModule for PamTime {
 
         let db = Db::with_config(&config);
 
-        let mut db = match db {
+        let db = match db {
             Ok(db) => db,
             _ => return PamError::SERVICE_ERR,
         };
