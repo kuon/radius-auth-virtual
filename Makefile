@@ -12,7 +12,7 @@ release: release-host release-windows
 .PHONY: release-windows
 
 release-windows:
-	cargo build --target x86_64-pc-windows-gnu --release -p radius_client
+	cargo build --target x86_64-pc-windows-gnu --release -p auth_client
 
 .PHONY: release-host
 
