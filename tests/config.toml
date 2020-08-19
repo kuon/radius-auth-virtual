@@ -7,7 +7,7 @@ address = "127.0.0.1"
 timeout = 3
 
 [mapping.db]
-path = "/tmp/radius_auth_virtual.db"
+path = "../build/radius_auth_virtual.db"
 
 [mapping.default_user]
 username = "radius"

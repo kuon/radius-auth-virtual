@@ -1,6 +1,8 @@
 #[macro_use] extern crate assert_matches;
 
-use radius_virtual::prelude::*;
+use radius::Credentials;
+use radius::Client;
+use radius::Error;
 
 mod helpers;
 use helpers::*;

@@ -5,6 +5,7 @@
 
 export LD_LIBRARY_PATH=./build/kqueue/
 
+rm ./build/radius_auth_virtual.db
 cp ./tests/authorize build/freeradius/dist/etc/raddb/mods-config/files/authorize
 
 ./build/freeradius/dist/sbin/radiusd -f -l stdout &
