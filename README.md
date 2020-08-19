@@ -1,9 +1,9 @@
-# Auth RADIUS Virtual
+# Auth Radius Virtual
 
-This project provides a Linux PAM module for RADIUS authentication coupled with
+This project provides a Linux PAM module for Radius authentication coupled with
 an NSS module.
 
-This allows for users to log in with RADIUS account and be mapped to existing
+This allows for users to log in with Radius account and be mapped to existing
 Linux account.
 
 ## Overview
