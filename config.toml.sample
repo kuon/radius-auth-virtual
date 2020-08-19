@@ -1,0 +1,108 @@
+###############################################################################
+### Configuration file for the radius_auth_client as well as the            ###
+### PAM / NSS / Shell wrapper modules.                                      ###
+### For security reason, it is important to ensure this file is owned       ###
+### by root and not readable by anyone else.                                ###
+###############################################################################
+
+# The radius section defines the Radius server configuration. For the
+# auth_radius_client binary, this is the only required section.
+[radius]
+
+# The radius shared secret
+shared_secret = "testing123"
+
+# A list of vendor attributes to lookup when authenticating user.
+# Multiple attributes can be requested.
+# The format is "vendor.subtype".
+attributes = ["1.1"]
+# attributes = ["1.1", "1.2", "1.3"]
+
+# The radius server section list radius servers.
+# Each server will be tried in the order listed below.
+# After timeout has expired, the next server will be tried.
+[[radius.servers]]
+
+# The server address can either be an IPv4 address, an IPv6 address or a
+# hostname. In case the hostname resolves to both an IPv4 and IPv6 addresses,
+# both address will be tried with the same timeout.
+address = "127.0.0.1"
+# address = "::1"
+# address = "radius.example.com"
+
+# Timeout is in seconds
+timeout = 3
+
+# The mapping section defines the NSS/PAM module configuration.
+# The mapping.db section defines the NSS/PAM module DB configuration.
+[mapping.db]
+
+# Database file path (will be written as root)
+path = "/tmp/radius_auth_virtual.db"
+
+# The default user returned by NSS before the user exists in its database
+# This should be an unprivileged user.
+[mapping.default_user]
+
+# Local username (user must exist in /etc/passwd)
+username = "radius"
+
+# UID defined in /etc/passwd
+uid = 1012
+
+# Group defined in /etc/passwd
+group = "radius"
+
+# GID defined in /etc/group
+gid = 1012
+
+# Home directory (must exist)
+home = "/home/radius"
+
+# This MUST be the radius shell binary wrapper provided in this repository
+shell = "/usr/bin/radius_shell"
+
+# The following section defines the user mapping for radius user.
+# Each radius user will be mapped to a local linux user if the vendor attribute
+# match.
+# The user information must be the same as in /etc/passwd and /etc/group.
+# They must be copied here for consistency and security.
+# ALL information listed below are REQUIRED.
+[[mapping.users]]
+
+# Name of the LOCAL user (must exist in /etc/passwd)
+username = "adminuser"
+
+# UID of the LOCAL user (must exist in /etc/passwd)
+uid = 1010
+
+# Group of the LOCAL user (must exist in /etc/group)
+group = "admingroup"
+
+# GID of the LOCAL user (must exist in /etc/group)
+gid = 1010
+
+# Home directory of the LOCAL user
+home = "/home/adminuser"
+
+# Shell of the LOCAL user
+shell = "/bin/bash"
+
+# The attribute to match, MUST be listed in radius.attributes
+attribute = "1.1"
+
+# The attribute value to math to, alway a byte array, even when single byte.
+attribute_value = [0x01]
+
+# Another example user
+# [[mapping.users]]
+# username = "normaluser"
+# uid = 1011
+# group = "normalgroup"
+# gid = 1011
+# home = "/home/normaluser"
+# shell = "/bin/bash"
+#
+# attribute = "1.1"
+# attribute_value = [0x02]
+
