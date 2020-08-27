@@ -13,6 +13,7 @@ libnss = "0.3.0"
 paste = "1.0.0"
 log = "0.4.11"
 nss_db = {path = "../nss_db"}
+nix = "0.18.0"
 
 [lib]
 name = "nss_radius_virtual"

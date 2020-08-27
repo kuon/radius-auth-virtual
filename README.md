@@ -142,6 +142,13 @@ like this:
 
 `-rwsr-xr-x 1 root root /usr/bin/radius_shell`
 
+#### Su and Sudo
+
+`su` should work as expected with `root` password, `sudo` will ask for the
+mapped user password. For example, if you log in as `fred:pass` and this user is
+mapped to `admin:secret` you will be logged as `admin` but `sudo` will expect
+the password of the `admin` user: `secret`. The best way to provide sudo access
+to mapped user is to use the `NOPASSWD:` option.
 
 ### Auth client
 
@@ -159,6 +166,17 @@ takes the path of the config file as command line argument.
 
 The configuration is documented in the [sample configuration
 file](config.toml.sample).
+
+## Building
+
+If you want to build the binaries yourself, you need to be running Linux and
+install rust and windows cross compiler.
+
+Then follow those steps:
+
+- Clone this repository, including submodules
+- Run `make applypatch`
+- Run `make release`
 
 
 ## License
