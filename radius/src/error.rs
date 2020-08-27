@@ -16,13 +16,13 @@ pub enum Error {
     NoSharedSecret,
     #[error("Shared secret too long (max 256 chars)")]
     SharedSecretTooLong,
-    #[error("Underlying IO error")]
+    #[error("Underlying IO error: {0}")]
     IOError(#[from] std::io::Error),
     #[error("RADIUS client failure")]
     RadiusClient,
     #[error("Authentication rejected, wrong credentials")]
     AuthReject,
-    #[error("TOML syntax error")]
+    #[error("TOML syntax error: {0}")]
     TomlError(#[from] toml::de::Error),
     #[error("Config format error")]
     ConfigFormat,
