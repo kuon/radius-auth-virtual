@@ -12,5 +12,6 @@ pub fn setup_log<S: Into<String>>(name: S) {
 
     let logger = syslog::unix(formatter).expect("could not connect to syslog");
     log::set_boxed_logger(Box::new(BasicLogger::new(logger)))
-        .map(|()| log::set_max_level(LevelFilter::Info));
+        .map(|()| log::set_max_level(LevelFilter::Debug));
 }
+

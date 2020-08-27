@@ -1,3 +1,5 @@
+debug = true
+
 [radius]
 shared_secret = "testing123"
 attributes = ["1.1"]

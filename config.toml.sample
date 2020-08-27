@@ -5,9 +5,17 @@
 ### by root and not readable by anyone else.                                ###
 ###############################################################################
 
+# General debug
+# This set PAM and NSS debug via syslog
+# debug = true
+
 # The radius section defines the Radius server configuration. For the
 # auth_radius_client binary, this is the only required section.
 [radius]
+
+# Radius debug
+# This debug radius as stdout
+# debug = true
 
 # The radius shared secret
 shared_secret = "testing123"

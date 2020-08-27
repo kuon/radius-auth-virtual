@@ -9,6 +9,9 @@ use helpers::*;
 #[test]
 fn it_store_user() -> Result<(), Error> {
     let conf = config()?;
+
+    assert!(conf.debug());
+
     let mut db = Db::with_config(&conf)?;
     let mut user = User::new("testing");
     user.attributes.push(Attribute {

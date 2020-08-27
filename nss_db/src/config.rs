@@ -32,20 +32,21 @@ pub struct DefaultUser {
     pub group: String,
     pub gid: u32,
     pub home: String,
-    pub shell: String
+    pub shell: String,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Mapping {
     pub db: Db,
     pub users: Vec<UserMapping>,
-    pub default_user: DefaultUser
+    pub default_user: DefaultUser,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
     pub radius: radius::Config,
     pub mapping: Mapping,
+    pub debug: Option<bool>,
 }
 
 impl Config {
@@ -79,5 +80,9 @@ impl Config {
         }
 
         None
+    }
+
+    pub fn debug(&self) -> bool {
+        self.debug.unwrap_or(false)
     }
 }
