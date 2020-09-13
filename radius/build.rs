@@ -98,7 +98,7 @@ fn main() {
         .include("../hostap/src")
         .include("../hostap/src/utils")
         .include(openssl_include)
-        .compile("hostap.a");
+        .compile("hostap");
 }
 
 fn load_config(build: &mut cc::Build, config: &[(&str, &str)]) {
